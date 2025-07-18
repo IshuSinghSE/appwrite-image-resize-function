@@ -28,15 +28,20 @@ export default async ({ req, res, log, error }) => {
 
         busboy.on('finish', async () => {
           try {
-            const buffer = Buffer.concat(fileBuffer);
-            const { width, height, format = 'webp', quality = 80 } = fields;
+            const buffer = fileBuffer.length > 0 ? Buffer.concat(fileBuffer) : null;
+            // Accept url from form-data (fields) for POST
+            const { url, width, height, format = 'webp', quality = 80 } = fields;
+            if (!buffer && !url) {
+              resolve(res.text('Missing image URL or file upload'));
+              return;
+            }
             const outputBuffer = await resizeImage({
-              url: null, // not used
+              url: url || null,
               width,
               height,
               format,
               quality,
-              buffer, // pass buffer directly
+              buffer,
             });
             resolve(res.binary(outputBuffer, `image/${format}`));
           } catch (err) {
@@ -45,7 +50,7 @@ export default async ({ req, res, log, error }) => {
           }
         });
 
-        busboy.end(req.body);
+        req.pipe(busboy);
       });
     }
 

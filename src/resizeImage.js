@@ -44,7 +44,7 @@ const resizeImage = async ({
   withMetadata = false
 }) => {
   // Input validation
-  if (!url) throw new Error('Missing image URL');
+  if (!buffer && !url) throw new Error('Missing image URL or file buffer');
   // Accept width/height as string or number, and coerce to number
   const w = Number(width);
   const h = Number(height);
