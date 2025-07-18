@@ -44,8 +44,8 @@ export default async ({ req, res, log, error }) => {
         format,
         quality,
       });
-      cache.set(cacheKey, outputBuffer);
-      log(`Cache set for ${cacheKey}`);
+      // cache.set(cacheKey, outputBuffer);
+      // log(`Cache set for ${cacheKey}`);
       return res.binary(outputBuffer, `image/${format}`);
     } catch (err) {
       error('Image resize error: ' + err.message);
