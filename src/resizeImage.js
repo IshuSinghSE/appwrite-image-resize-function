@@ -1,7 +1,8 @@
 import sharp from 'sharp';
-import fs from 'fs/promises';
 import path from 'path';
 import fetch from 'node-fetch';
+import fs from 'fs/promises';
+import { parseBackground } from './utils.js'; // Assuming you have a utility function to parse background colors
 /**
  * Resize an image from a local file or remote URL using sharp.
  *
