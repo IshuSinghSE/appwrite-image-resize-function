@@ -12,46 +12,80 @@ export default async ({ req, res, log, error }) => {
 
   if (req.path === '/resize') {
     if (req.method === 'POST') {
-      let fileBuffer = [];
-      let fields = {};
-      const busboy = Busboy({ headers: req.headers });
-
-      return new Promise((resolve, reject) => {
-        busboy.on('file', (fieldname, file) => {
-          file.on('data', (data) => fileBuffer.push(data));
-          file.on('end', () => log('File upload complete'));
-        });
-
-        busboy.on('field', (fieldname, val) => {
-          fields[fieldname] = val;
-        });
-
-        busboy.on('finish', async () => {
-          try {
-            const buffer = fileBuffer.length > 0 ? Buffer.concat(fileBuffer) : null;
-            // Accept url from form-data (fields) for POST
-            const { url, width, height, format = 'webp', quality = 80 } = fields;
-            if (!buffer && !url) {
-              resolve(res.text('Missing image URL or file upload'));
-              return;
+      // Parse multipart form-data from req.bodyText
+      const contentType = req.headers['content-type'] || req.headers['Content-Type'] || '';
+      if (contentType.startsWith('multipart/form-data')) {
+        // Minimal multipart parser (no external deps)
+        const boundaryMatch = contentType.match(/boundary=(.*)$/);
+        if (!boundaryMatch) return res.text('Missing multipart boundary');
+        const boundary = boundaryMatch[1];
+        const parts = req.bodyText.split('--' + boundary);
+        let fields = {};
+        let buffer = null;
+        for (const part of parts) {
+          if (part.includes('Content-Disposition')) {
+            // Extract name
+            const nameMatch = part.match(/name="([^"]+)"/);
+            const name = nameMatch ? nameMatch[1] : null;
+            // Extract filename (if file)
+            const filenameMatch = part.match(/filename="([^"]+)"/);
+            // Extract value or file
+            const splitIndex = part.indexOf('\r\n\r\n');
+            if (splitIndex !== -1 && name) {
+              const value = part.slice(splitIndex + 4).replace(/\r\n--$/, '').replace(/\r\n$/, '');
+              if (filenameMatch) {
+                // File upload
+                buffer = Buffer.from(value, 'binary');
+              } else {
+                fields[name] = value;
+              }
             }
-            const outputBuffer = await resizeImage({
-              url: url || null,
-              width,
-              height,
-              format,
-              quality,
-              buffer,
-            });
-            resolve(res.binary(outputBuffer, `image/${format}`));
-          } catch (err) {
-            error('Image resize error: ' + err.message);
-            resolve(res.text('Error: ' + err.message));
           }
-        });
-
-        req.pipe(busboy);
-      });
+        }
+        const { url, width, height, format = 'webp', quality = 80 } = fields;
+        if (!buffer && !url) {
+          return res.text('Missing image URL or file upload');
+        }
+        try {
+          const outputBuffer = await resizeImage({
+            url: url || null,
+            width,
+            height,
+            format,
+            quality,
+            buffer,
+          });
+          return res.binary(outputBuffer, `image/${format}`);
+        } catch (err) {
+          error('Image resize error: ' + err.message);
+          return res.text('Error: ' + err.message);
+        }
+      } else if (contentType.startsWith('application/json')) {
+        // Parse JSON body
+        let body;
+        try {
+          body = JSON.parse(req.bodyText);
+        } catch (err) {
+          return res.text('Invalid JSON');
+        }
+        const { url, width, height, format = 'webp', quality = 80 } = body;
+        if (!url) return res.text('Missing image URL');
+        try {
+          const outputBuffer = await resizeImage({
+            url,
+            width,
+            height,
+            format,
+            quality,
+          });
+          return res.binary(outputBuffer, `image/${format}`);
+        } catch (err) {
+          error('Image resize error: ' + err.message);
+          return res.text('Error: ' + err.message);
+        }
+      } else {
+        return res.text('Unsupported content-type');
+      }
     }
 
     const {
