@@ -42,7 +42,13 @@ const resizeImage = async ({
 }) => {
   // Input validation
   if (!url) throw new Error('Missing image URL');
-  if (!width || !height || isNaN(width) || isNaN(height)) throw new Error('Invalid width or height');
+  // Accept width/height as string or number, and coerce to number
+  const w = Number(width);
+  const h = Number(height);
+  if (!w || !h || isNaN(w) || isNaN(h) || w <= 0 || h <= 0) {
+    console.error('Received width:', width, 'height:', height);
+    throw new Error('Invalid width or height');
+  }
   if (!SUPPORTED_FORMATS.includes(format)) throw new Error(`Unsupported format: ${format}`);
   if (isNaN(quality) || quality < 1 || quality > 100) throw new Error('Quality must be between 1 and 100');
   if (typeof rotate !== 'number') throw new Error('Rotate must be a number');
@@ -76,13 +82,13 @@ const resizeImage = async ({
     let image = sharp(buffer);
     if (rotate) image = image.rotate(rotate);
     const bgObj = parseBackground(background);
-    image = image.resize(Number(width), Number(height), {
+    image = image.resize(w, h, {
       fit,
       position,
       background: bgObj,
       withoutEnlargement: true
     });
-    if (crop) image = image.extract({ left: 0, top: 0, width: Number(width), height: Number(height) });
+    if (crop) image = image.extract({ left: 0, top: 0, width: w, height: h });
     if (format === 'webp') {
       image = image.webp({ quality: Number(quality), alphaQuality: Number(quality), force: true, smartSubsample: true, nearLossless: false, lossless: false, effort: 4, progressive });
     } else if (format === 'jpeg') {

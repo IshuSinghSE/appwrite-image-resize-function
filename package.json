@@ -5,7 +5,8 @@
   "main": "src/main.js",
   "type": "module",
   "scripts": {
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "build": "echo 'No build step required'"
   },
   "dependencies": {
     "node-cache": "^5.1.2",
