@@ -34,13 +34,13 @@ export default async ({ req, res, log, error }) => {
             const splitIndex = part.indexOf('\r\n\r\n');
             if (splitIndex !== -1 && name) {
               let value = part.slice(splitIndex + 4);
-              // Remove only the trailing boundary if present, but do not trim \r\n from file data
               if (filenameMatch) {
                 // File upload
-                // Remove trailing boundary marker if present
+                // Find the first occurrence of the boundary marker and slice up to it
                 const boundaryMarker = `\r\n--${boundary}`;
-                if (value.endsWith(boundaryMarker)) {
-                  value = value.slice(0, -boundaryMarker.length);
+                const markerIndex = value.indexOf(boundaryMarker);
+                if (markerIndex !== -1) {
+                  value = value.slice(0, markerIndex);
                 }
                 buffer = Buffer.from(value, 'latin1');
               } else {
