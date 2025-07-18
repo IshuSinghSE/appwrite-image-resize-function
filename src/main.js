@@ -1,7 +1,7 @@
 import resizeImage from './resizeImage.js';
-import NodeCache from 'node-cache';
+// import NodeCache from 'node-cache';
 
-const cache = new NodeCache({ stdTTL: 3600, checkperiod: 120 }); // 1 hour TTL
+// const cache = new NodeCache({ stdTTL: 3600, checkperiod: 120 }); // 1 hour TTL
 
 // This Appwrite function will be executed every time your function is triggered
 export default async ({ req, res, log, error }) => {
@@ -21,20 +21,20 @@ export default async ({ req, res, log, error }) => {
     if (!url) return res.text('Missing image URL');
 
     // Use filename as cache key (for local files) or hash of url+params for remote
-    let cacheKey;
-    if (/^https?:\/\//i.test(url)) {
-      // Remote: hash url+params
-      cacheKey = `${url}|${width}|${height}|${format}|${quality}`;
-    } else {
-      // Local: use filename+params
-      cacheKey = `${url}|${width}|${height}|${format}|${quality}`;
-    }
+    // let cacheKey;
+    // if (/^https?:\/\//i.test(url)) {
+    //   // Remote: hash url+params
+    //   cacheKey = `${url}|${width}|${height}|${format}|${quality}`;
+    // } else {
+    //   // Local: use filename+params
+    //   cacheKey = `${url}|${width}|${height}|${format}|${quality}`;
+    // }
 
-    const cached = cache.get(cacheKey);
-    if (cached) {
-      log(`Cache hit for ${cacheKey}`);
-      return res.binary(cached, `image/${format}`);
-    }
+    // const cached = cache.get(cacheKey);
+    // if (cached) {
+    //   log(`Cache hit for ${cacheKey}`);
+    //   return res.binary(cached, `image/${format}`);
+    // }
 
     try {
       const outputBuffer = await resizeImage({

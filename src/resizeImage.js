@@ -30,8 +30,8 @@ const isLocalPath = (url) => !/^https?:\/\//i.test(url);
 
 const resizeImage = async ({
   url,
-  width,
-  height,
+  width = 400,
+  height = 400,
   format = 'webp',
   quality = 80,
   fit = 'inside',
