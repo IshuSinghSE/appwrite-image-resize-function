@@ -13,7 +13,8 @@ export default async ({ req, res, log, error }) => {
   if (req.path === '/resize') {
     if (req.method === 'POST') {
       // Parse multipart form-data from req.bodyText
-      const contentType = req.headers['content-type'] || req.headers['Content-Type'] || '';
+      const contentType =
+        req.headers['content-type'] || req.headers['Content-Type'] || '';
       if (contentType.startsWith('multipart/form-data')) {
         // Minimal multipart parser (no external deps)
         const boundaryMatch = contentType.match(/boundary=(.*)$/);
@@ -32,10 +33,13 @@ export default async ({ req, res, log, error }) => {
             // Extract value or file
             const splitIndex = part.indexOf('\r\n\r\n');
             if (splitIndex !== -1 && name) {
-              const value = part.slice(splitIndex + 4).replace(/\r\n--$/, '').replace(/\r\n$/, '');
+              const value = part
+                .slice(splitIndex + 4)
+                .replace(/\r\n--$/, '')
+                .replace(/\r\n$/, '');
               if (filenameMatch) {
                 // File upload
-                buffer = Buffer.from(value, 'binary');
+                buffer = Buffer.from(value, 'latin1');
               } else {
                 fields[name] = value;
               }
