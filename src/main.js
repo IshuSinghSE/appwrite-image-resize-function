@@ -33,14 +33,19 @@ export default async ({ req, res, log, error }) => {
             // Extract value or file
             const splitIndex = part.indexOf('\r\n\r\n');
             if (splitIndex !== -1 && name) {
-              const value = part
-                .slice(splitIndex + 4)
-                .replace(/\r\n--$/, '')
-                .replace(/\r\n$/, '');
+              let value = part.slice(splitIndex + 4);
+              // Remove only the trailing boundary if present, but do not trim \r\n from file data
               if (filenameMatch) {
                 // File upload
+                // Remove trailing boundary marker if present
+                const boundaryMarker = `\r\n--${boundary}`;
+                if (value.endsWith(boundaryMarker)) {
+                  value = value.slice(0, -boundaryMarker.length);
+                }
                 buffer = Buffer.from(value, 'latin1');
               } else {
+                // For fields, trim trailing newlines
+                value = value.replace(/\r\n--$/, '').replace(/\r\n$/, '');
                 fields[name] = value;
               }
             }
