@@ -9,6 +9,8 @@
     "build": "echo 'No build step required'"
   },
   "dependencies": {
+    "busboy": "^1.6.0",
+    "express": "^5.1.0",
     "node-cache": "^5.1.2",
     "node-fetch": "^3.3.2",
     "sharp": "^0.34.3"

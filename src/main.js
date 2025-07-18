@@ -1,3 +1,4 @@
+import Busboy from 'busboy';
 import resizeImage from './resizeImage.js';
 // import NodeCache from 'node-cache';
 
@@ -5,12 +6,49 @@ import resizeImage from './resizeImage.js';
 
 // This Appwrite function will be executed every time your function is triggered
 export default async ({ req, res, log, error }) => {
-
   if (req.path === '/ping') {
     return res.json({ message: 'Pong' });
   }
 
   if (req.path === '/resize') {
+    if (req.method === 'POST') {
+      let fileBuffer = [];
+      let fields = {};
+      const busboy = Busboy({ headers: req.headers });
+
+      return new Promise((resolve, reject) => {
+        busboy.on('file', (fieldname, file) => {
+          file.on('data', (data) => fileBuffer.push(data));
+          file.on('end', () => log('File upload complete'));
+        });
+
+        busboy.on('field', (fieldname, val) => {
+          fields[fieldname] = val;
+        });
+
+        busboy.on('finish', async () => {
+          try {
+            const buffer = Buffer.concat(fileBuffer);
+            const { width, height, format = 'webp', quality = 80 } = fields;
+            const outputBuffer = await resizeImage({
+              url: null, // not used
+              width,
+              height,
+              format,
+              quality,
+              buffer, // pass buffer directly
+            });
+            resolve(res.binary(outputBuffer, `image/${format}`));
+          } catch (err) {
+            error('Image resize error: ' + err.message);
+            resolve(res.text('Error: ' + err.message));
+          }
+        });
+
+        busboy.end(req.body);
+      });
+    }
+
     const {
       url,
       width,

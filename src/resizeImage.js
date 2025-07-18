@@ -30,6 +30,7 @@ const isLocalPath = (url) => !/^https?:\/\//i.test(url);
 
 const resizeImage = async ({
   url,
+  buffer,
   width = 400,
   height = 400,
   format = 'webp',
@@ -57,9 +58,11 @@ const resizeImage = async ({
   if (typeof progressive !== 'boolean') throw new Error('Progressive must be boolean');
   if (typeof withMetadata !== 'boolean') throw new Error('withMetadata must be boolean');
 
-  let buffer;
-  if (isLocalPath(url)) {
-    buffer = await fs.readFile(path.resolve(url));
+  let imageBuffer;
+  if (buffer) {
+    imageBuffer = buffer;
+  } else if (isLocalPath(url)) {
+    imageBuffer = await fs.readFile(path.resolve(url));
   } else {
     // Fetch image with timeout
     let response;
@@ -74,14 +77,14 @@ const resizeImage = async ({
     if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
 
     try {
-      buffer = await response.arrayBuffer();
+      imageBuffer = await response.arrayBuffer();
     } catch (err) {
       throw new Error('Failed to read image buffer');
     }
   }
 
   try {
-    let image = sharp(buffer);
+    let image = sharp(imageBuffer);
     if (rotate) image = image.rotate(rotate);
     const bgObj = parseBackground(background);
     image = image.resize(w, h, {
